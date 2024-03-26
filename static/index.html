@@ -29,8 +29,6 @@
     <!-- Content -->
     <div class="container mx-auto px-4 py-8 flex-1">
         <div id="preview-tab" class="tab-content">
-            <h1 class="text-xl font-bold mb-4">Preview</h1>
-            <!-- <img src="/show_image" alt="Flask Image" class="mb-4"> -->
             <div id="preview-container" class="border border-gray-300"></div>
         </div>
         <div id="editor-tab" class="hidden tab-content">
@@ -38,6 +36,7 @@
                 <div id="container" class="border border-gray-300"></div>
             </div>
             <div class="text-center mt-4">
+                <input type="text" id="nameInput" placeholder="Name" class="mt-4 w-64 px-4 py-2 border border-gray-300 rounded-full focus:outline-none">
                 <input type="color" id="colorPicker" class="mt-4">
                 <button id="submitButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Upload to canvas</button>
             </div>
@@ -61,7 +60,17 @@
             </div>
         </div>
     </div>
-
+        
+    <!-- Popup Modal -->
+    <div id="popup" class="modal-overlay fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white p-8 rounded shadow-lg">
+            <h2 class="text-lg font-semibold mb-4">Redirect URL</h2>
+            <a id="popupUrl" class="text-blue-500 break-all"></a>
+            <div class="mt-4 flex justify-end">
+                <button onclick="closePopup()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Close</button>
+            </div>
+        </div>
+    </div>
     <!-- Footer -->
     <footer class="bg-gray-200 text-gray-800 py-4">
         <div class="container mx-auto px-4 text-center">

@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 import os
 import json
 from datetime import date
@@ -8,21 +8,10 @@ import imgur
 import db
 
 app = Flask(__name__)
-UPLOAD_FOLDER = 'static/uploads'
 ALLOWED_EXTENSIONS = {'png'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-
-import os
-from flask import request, jsonify
-from datetime import date
-from PIL import Image
-from io import BytesIO
-import requests
 
 @app.route('/upload', methods=['POST'])
 def upload_file():

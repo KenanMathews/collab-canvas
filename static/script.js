@@ -157,15 +157,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function submitKonvaImage() {
+        if(document.getElementById("nameInput").value.length == 0){
+            alert("Fill in a name")
+            return;
+        }
         // Convert Konva stage to image
         const content = stage.toDataURL({ mimeType: 'image/png' });
 
         const file = dataURLtoFile(content, 'image.png'); // Convert data URL to file object
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('x_coord', 'X coordinate value');
-        formData.append('y_coord', 'Y coordinate value');
-        formData.append('name', 'Name value');
+        formData.append('name', document.getElementById("nameInput").value);
 
         fetch('/upload', {
             method: 'POST',
@@ -179,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(data => {
             console.log('Success:', data);
+            showPopup(data.image_link)
         })
         .catch(error => {
             console.error('Error:', error);
@@ -244,6 +247,15 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Error fetching annotations:', error);
             return [];
         }
+    }
+    function showPopup(url) {
+        document.getElementById("popupUrl").innerText = url;
+        document.getElementById("popupUrl").href = url;
+        document.getElementById("popup").classList.remove("hidden");
+    }
+
+    function closePopup() {
+        document.getElementById("popup").classList.add("hidden");
     }
     loadPreviewImage()
     // Usage:
