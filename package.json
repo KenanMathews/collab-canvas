@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "npx tailwindcss build static/styles.css -o static/dist/styles.css"
+    "build:css": "npx tailwindcss build static/styles.css -o static/dist/styles.css",
+    "start:server": "npx tailwindcss build static/styles.css -o static/dist/styles.css && pip install -r requirements.txt"
   },
   "keywords": [],
   "author": "",
