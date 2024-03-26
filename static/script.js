@@ -206,14 +206,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     preview_stage.scaleX(0.5);
     preview_stage.scaleY(0.5);
-
-    // Function to add images to layer from a JSON array
-    function addImagesFromJSON(jsonArray, stage) {
-        jsonArray.forEach(function (jsonObj) {
-            // Create a new layer for each JSON object
-            var layer = new Konva.Layer();
-            stage.add(layer);
     
+    // Function to add images to group from a JSON array
+    function addImagesFromJSON(jsonArray, stage) {
+        var layer = new Konva.Layer();
+        stage.add(layer);
+    
+        var group = new Konva.Group();
+    
+        jsonArray.forEach(function (jsonObj) {
             var imageObj = new Image();
             imageObj.onload = function () {
                 var image = new Konva.Image({
@@ -224,13 +225,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     height: 400           // Image height (modify as needed)
                 });
     
-                // Add the image to the layer
-                layer.add(image);
-                layer.draw(); // Draw the layer to see changes
+                // Add the image to the group
+                group.add(image);
+                layer.batchDraw(); // Draw the layer to see changes
             };
             imageObj.src = jsonObj.image_path; // Image URL from JSON object
         });
+    
+        // Add the group to the layer
+        layer.add(group);
     }
+        
 
     function loadPreviewImage(){
         fetchAnnotations()
