@@ -258,10 +258,6 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("popupUrl").href = url;
         document.getElementById("popup").classList.remove("hidden");
     }
-
-    function closePopup() {
-        document.getElementById("popup").classList.add("hidden");
-    }
     loadPreviewImage()
     // Usage:
     fetchAnnotations()

@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from supabase import create_client, Client
 import os
+import pytz
 
 # Initialize Supabase client
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -28,13 +29,18 @@ def update_annotations(filepath, x_coord, y_coord, name):
         print(res.error)
 
 def get_annotations():
-    # Get today's date at 12:00 AM GMT
-    today = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    # Get tomorrow's date at 12:00 AM GMT to use as the upper bound
-    tomorrow = today + timedelta(days=1)
+    # Get yesterday's date at 12:00 AM PT
+    pt = pytz.timezone('America/Los_Angeles')
+    yesterday_pt = datetime.now(pt).replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    # Get today's date at 12:00 AM PT
+    today_pt = yesterday_pt + timedelta(days=1)
 
-    # Construct query to fetch annotations created between today and tomorrow
-    res = supabase.table('test-table').select('*').filter('created_at', 'gte', today.isoformat()).filter('created_at', 'lt', tomorrow.isoformat()).execute()
+    # Convert datetime objects to UTC
+    yesterday_utc = yesterday_pt.astimezone(pytz.utc)
+    today_utc = today_pt.astimezone(pytz.utc)
+
+    # Construct query to fetch annotations created between yesterday and today in UTC
+    res = supabase.table('test-table').select('*').filter('created_at', 'gte', yesterday_utc.isoformat()).filter('created_at', 'lt', today_utc.isoformat()).execute()
 
     if res.data:
         annotations = res.data
