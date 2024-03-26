@@ -27,6 +27,7 @@ def update_annotations(filepath, x_coord, y_coord, name):
 def get_annotations():
     # Get yesterday's date at 12:00 AM UTC
     yesterday_utc = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
+    print(yesterday_utc)
     # Get today's date at 12:00 AM UTC
     today_utc = yesterday_utc + timedelta(days=1)
 
@@ -60,4 +61,4 @@ def get_random_free_coordinate(annotations):
         return None
 
 # Example usage:
-# update_annotations(upload_folder_path, filepath, x_coord, y_coord, name)
+#update_annotations(upload_folder_path, filepath, x_coord, y_coord, name)
