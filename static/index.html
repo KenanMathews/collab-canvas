@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Canvas</title>
+    <link href="/static/dist/styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/konva@8.2.3/konva.min.js"></script>
+</head>
+<body class="flex flex-col min-h-screen bg-white text-gray-900">
+    <script src="/static/script.js"></script>
+    
+    <!-- Header -->
+    <header class="bg-gray-200 text-gray-800 py-4">
+        <div class="container mx-auto px-4">
+            <h1 class="text-2xl font-bold">Collaborative Canvas</h1>
+        </div>
+    </header>
+
+    <!-- Tabs -->
+    <div class="container mx-auto px-4">
+        <div class="flex justify-center">
+            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l focus:outline-none tab-btn" data-target="preview-tab">Preview</button>
+            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none tab-btn" data-target="editor-tab">Editor</button>
+            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r focus:outline-none tab-btn" data-target="annotations-tab">Annotations List</button>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="container mx-auto px-4 py-8 flex-1">
+        <div id="preview-tab" class="tab-content">
+            <h1 class="text-xl font-bold mb-4">Preview</h1>
+            <!-- <img src="/show_image" alt="Flask Image" class="mb-4"> -->
+            <div id="preview-container" class="border border-gray-300"></div>
+        </div>
+        <div id="editor-tab" class="hidden tab-content">
+            <div class="flex justify-center">
+                <div id="container" class="border border-gray-300"></div>
+            </div>
+            <div class="text-center mt-4">
+                <input type="color" id="colorPicker" class="mt-4">
+                <button id="submitButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Upload to canvas</button>
+            </div>
+        </div>
+        <div id="annotations-tab" class="hidden tab-content">
+            <h2 class="text-xl font-bold mb-2">Annotations List</h2>
+            <div class="overflow-x-auto">
+                <table class="table-auto w-full">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-2">Name</th>
+                            <th class="px-4 py-2">Filename</th>
+                            <th class="px-4 py-2">X Coordinate</th>
+                            <th class="px-4 py-2">Y Coordinate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="annotations-list">
+                        <!-- Annotations will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-200 text-gray-800 py-4">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2024 Your Company. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
