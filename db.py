@@ -26,13 +26,10 @@ def update_annotations(filepath, x_coord, y_coord, name):
 
 def get_annotations():
     # Get yesterday's date at 12:00 AM UTC
-    yesterday_utc = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
-    print(yesterday_utc)
-    # Get today's date at 12:00 AM UTC
-    today_utc = yesterday_utc + timedelta(days=1)
+    today_utc = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Construct query to fetch annotations created between yesterday and today in UTC
-    res = supabase.table('test-table').select('*').filter('created_at', 'gte', yesterday_utc.isoformat()).filter('created_at', 'lt', today_utc.isoformat()).execute()
+    res = supabase.table('test-table').select('*').filter('created_at', 'gte', today_utc.isoformat()).execute()
 
     if res.data:
         annotations = res.data
