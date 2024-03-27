@@ -13,7 +13,7 @@
     <header class="bg-gray-200 text-gray-800 py-4 relative">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold">Collaborative Canvas</h1>
-            <button id="open-demo-modal-button" class="help-button absolute top-0 right-0 p-4 cursor-pointer">?</button>
+            <button id="open-demo-modal-button" class="help-button absolute top-0 right-0 p-4 cursor-pointer bg-blue-500 text-white shadow-md hover:bg-blue-600">?</button>
         </div>
     </header>
     <div class="container mx-auto px-4 text-center my-2">
@@ -58,7 +58,7 @@
             <div id="preview-container" class="border border-gray-300"></div>
         </div>
         <div id="annotations-tab" class="hidden tab-content">
-            <h2 class="text-xl font-bold mb-2">Annotations List</h2>
+            <h2 class="text-xl font-bold mb-2">Image List</h2>
             <div class="overflow-x-auto">
                 <table class="table-auto w-full">
                     <thead>
@@ -92,11 +92,12 @@
         <div class="modal bg-white p-8 rounded shadow-lg">
             <span id="close-demo-modal" class="close-modal absolute top-0 right-0 p-4 cursor-pointer">&times;</span>
             <h2 class="text-lg font-semibold mb-4">Welcome to the Collaborative Canvas!</h2>
+            <p>Welcome to Collaborative Canvas! Here, you can freely express your creativity on a large canvas by drawing in the editor. Your pixel art creations can be posted randomly anywhere on the canvas and utilize our text-to-image generator to instantly create pixel art images. Remember, the canvas resets daily, giving you endless opportunities to fill it with your imagination once again. Happy creating!</p>
             <p class="mb-4">To get started:</p>
             <ol class="list-decimal pl-6">
                 <li class="mb-2">Click on the "Editor" tab.</li>
-                <li class="mb-2">Upload an image and add your annotations.</li>
-                <li class="mb-2">Switch to the "Preview" tab to view your annotations.</li>
+                <li class="mb-2">Upload an image</li>
+                <li class="mb-2">Switch to the "Preview" tab to view your image.</li>
             </ol>
             <div class="mt-4 flex justify-end">
                 <button id="close-demo-modal-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Got it!</button>

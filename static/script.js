@@ -185,7 +185,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             submitButton.disabled = false;
             console.log('Success:', data);
-            showPopup(data.image_link)
+            showPopup(data.image_link);
+            resetEditor();
         })
         .catch(error => {
             submitButton.disabled = false;
@@ -283,9 +284,10 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("popupUrl").href = url;
         document.getElementById("popup").classList.remove("hidden");
     }
-    loadPreviewImage()
-    // Usage:
-    fetchAnnotations()
+    function loadInfoInPage(){
+        loadPreviewImage()
+        // Usage:
+        fetchAnnotations()
         .then(data => {
             const annotationsList = document.getElementById('annotations-list');
             data.forEach(annotation => {
@@ -300,6 +302,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 annotationsList.appendChild(row);
             });
         });
+    }
+    loadInfoInPage();
     // Add event listener to the submit button
     const submitButton = document.getElementById('submitButton');
     submitButton.addEventListener('click', submitKonvaImage);
@@ -386,6 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error("Error generating preview:", data.error);
                 // Handle preview generation errors (optional)
             }
+            loadInfoInPage();
         });
     }
     
@@ -394,13 +399,13 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("Fill in a name")
             return;
         }
-        uploadDataToSever();
+        uploadDataToServer();
         // Clear preview and disable button after upload
         document.getElementById("preview-pixel-art").classList.add("hidden");
         document.getElementById("confirmUploadButton").disabled = true;
     });
     
-    function uploadDataToSever() {
+    function uploadDataToServer() {
         const name = document.getElementById("nameInput").value;
         const imgSrc = document.getElementById("pixel-preview").src;
         
@@ -421,6 +426,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error("Error uploading data:", data.error);
                 // Handle upload errors (optional: show error message to the user)
             }
+            loadInfoInPage()
         })
         
     }
