@@ -24,7 +24,7 @@ def upload_file():
         if coords:
             name = request.form.get('name')
             # Upload image to Imgur
-            imgur_link = imgur.upload(image, name)
+            imgur_link = imgur.upload(image, name+'.png')
             db.update_annotations(imgur_link, coords[0], coords[1], name)
             if imgur_link:
                 return jsonify({'message': 'File uploaded successfully', 'image_link': imgur_link}), 200
@@ -56,11 +56,10 @@ def upload_pixel_art():
     name = request.form.get('name')
     image_link = request.form.get('image_link')
     try:
-        print(name)
-        print(image_link)
         if image_link:
             coords = db.get_random_free_coordinate(db.get_annotations())
-            db.update_annotations(image_link, coords[0], coords[1], name)
+            link = imgur.download_and_upload(image_link, name+'.png')
+            db.update_annotations(link, coords[0], coords[1], name)
             return jsonify({'message': 'Pixel art uploaded successfully', 'image_link': image_link}), 200
         else:
             return jsonify({'error': 'Failed to upload pixel art to Imgur'}), 500

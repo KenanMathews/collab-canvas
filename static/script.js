@@ -5,9 +5,6 @@ document.addEventListener('DOMContentLoaded', function () {
         height: 400
     });
 
-    const bufferLayer = new Konva.Layer();
-    stage.add(bufferLayer);
-
     const drawingLayer = new Konva.Layer();
     stage.add(drawingLayer);
 
