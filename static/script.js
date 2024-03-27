@@ -287,4 +287,23 @@ document.addEventListener('DOMContentLoaded', function () {
             selectedTab.classList.remove('hidden');
         });
     });
+    const demoModal = document.getElementById('demo-modal');
+    const openDemoModalButton = document.getElementById('open-demo-modal-button');
+    const closeDemoModalButton = document.getElementById('close-demo-modal-button');
+
+    // Function to open the demo modal
+    function openDemoModal() {
+        demoModal.classList.remove('hidden');
+    }
+
+    // Function to close the demo modal
+    function closeDemoModal() {
+        demoModal.classList.add('hidden');
+    }
+
+    // Event listener to open the demo modal when help button is clicked
+    openDemoModalButton.addEventListener('click', openDemoModal);
+
+    // Event listener to close the demo modal when close button is clicked
+    closeDemoModalButton.addEventListener('click', closeDemoModal);
 });
