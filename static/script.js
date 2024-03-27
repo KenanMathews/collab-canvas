@@ -40,6 +40,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    stage.on('mouseleave', function (event) {
+        isDrawing = false;
+    });
+
     stage.on('mouseup touchend', function () {
         isDrawing = false;
         lastDrawnPixel = null;
