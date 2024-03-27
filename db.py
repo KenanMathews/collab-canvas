@@ -24,6 +24,18 @@ def update_annotations(filepath, x_coord, y_coord, name):
     else:
         print(res.error)
 
+def update_generated_url(name, url):
+    # Insert data into Supabase table
+    data = {
+        'url': url,
+        'name': name,
+    }
+    res = supabase.table('generated-images-table').insert(data).execute()
+    if res.data:
+        print(res.data)
+    else:
+        print(res.error)
+
 def get_annotations():
     # Get yesterday's date at 12:00 AM UTC
     today_utc = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)

@@ -340,9 +340,18 @@ document.addEventListener('DOMContentLoaded', function () {
     closeDemoModalButton.addEventListener('click', closeDemoModal);
 
     document.getElementById("generatePreviewButton").addEventListener("click", function() {
+        if(document.getElementById("nameInput").value.length == 0){
+            alert("Fill in a name")
+            return;
+        }
+        if(document.getElementById("promptInput").value.length == 0){
+            alert("Fill in a prompt")
+            return;
+        }
         const prompt = document.getElementById("promptInput").value;
+        const name = document.getElementById("nameInput").value
         // Call a function to load the prompt and generate/display the preview (implementation needed)
-        loadPromptAndShowPreview(prompt);
+        loadPromptAndShowPreview(prompt,name);
         
         // Enable confirm upload button if there's a preview
         document.getElementById("confirmUploadButton").disabled = false;
@@ -368,10 +377,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.body.removeChild(a);
         }
     // Function to handle loading prompt and showing preview (implementation based on your backend logic)
-    function loadPromptAndShowPreview(prompt) {
+    function loadPromptAndShowPreview(prompt,name) {
         fetch('/generate_pixel_art', {
             method: 'POST',
-            body: JSON.stringify({ prompt: prompt }),
+            body: JSON.stringify({ prompt: prompt, name, name }),
             headers: { 'Content-Type': 'application/json' }
         })
         .then(response => response.json())

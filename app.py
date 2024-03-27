@@ -38,11 +38,13 @@ def upload_file():
 @app.route('/generate_pixel_art', methods=['POST'])
 def generate_pixel_art():
     data = request.get_json()
+    name = data.get('name')
     prompt = data.get('prompt')
     output = ai_generate.generate_pixel_art(prompt)
     if output:
         url = output['data'][0]['asset_url']
         if url:
+            db.update_generated_url(name,url)
             return jsonify({'message': 'Pixel art generated successfully', 'image_link': url}), 200
         else:
             return jsonify({'error': 'Failed to generate'}), 500
