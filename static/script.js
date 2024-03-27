@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.message === 'Pixel art preview generated') {
+            if (data.message === "Pixel art generated successfully") {
                 const previewElement = document.getElementById("preview-pixel-art");
                 previewElement.classList.remove("hidden");
                 // Create an image element
