@@ -1,5 +1,4 @@
 from prodiapy import Prodia
-from prodiapy.resources.engine import SyncAPIClient
 import os
 
 PRODIA_API_KEY = os.getenv("PRODIA_API_KEY")

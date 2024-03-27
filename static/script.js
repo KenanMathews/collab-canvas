@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function () {
     const stage = new Konva.Stage({
         container: 'container',
-        width: 400,
-        height: 400
+        width: 300,
+        height: 300
+        
     });
 
     const drawingLayer = new Konva.Layer();
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    stage.on('mousemove touchmove', function (event) {
+    stage.on('mousemove touchmove', function (event) {      // add check to make sure it is within canvas
         if (isDrawing) {
             drawPixel(event);
         }
@@ -69,9 +70,26 @@ document.addEventListener('DOMContentLoaded', function () {
         // Only draw if the pointer is within the canvas bounds
         if (gridX >= 0 && gridX < cols && gridY >= 0 && gridY < rows) {
             if (!lastDrawnPixel || lastDrawnPixel.x !== gridX || lastDrawnPixel.y !== gridY) {
-                createPixel(gridX, gridY, color);
+                updatePixel(gridX, gridY, color);
                 lastDrawnPixel = { x: gridX, y: gridY };
             }
+        }
+    }
+    
+
+    function updatePixel(x, y, color) {
+        // Find the existing pixel at the specified coordinates
+        const pixel = drawingLayer.findOne(node => {
+            return node.getClassName() === 'Rect' && node.x() === x * pixelSize && node.y() === y * pixelSize;
+        });
+    
+        if (pixel) {
+            // Update the color of the existing pixel
+            pixel.fill(color);
+            drawingLayer.batchDraw();
+        } else {
+            // If no pixel exists at the specified coordinates, create a new one
+            createPixel(x, y, color);
         }
     }
     
@@ -228,8 +246,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const preview_stage = new Konva.Stage({
         container: 'preview-container',
-        width: 1600,
-        height: 1600
+        width: 800,
+        height: 800
     });
     preview_stage.scaleX(0.5);
     preview_stage.scaleY(0.5);
