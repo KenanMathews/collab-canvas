@@ -1,11 +1,7 @@
 from flask import Flask, request, jsonify
-import os
-import json
-from datetime import date
-from PIL import Image
-from io import BytesIO
 import imgur
 import db
+import ai_generate
 
 app = Flask(__name__)
 ALLOWED_EXTENSIONS = {'png'}
@@ -38,6 +34,36 @@ def upload_file():
             return jsonify({'error': 'Limit reached'}), 200
     else:
         return jsonify({'error': 'File type not allowed'}), 400
+
+@app.route('/generate_pixel_art', methods=['POST'])
+def generate_pixel_art():
+    data = request.get_json()
+    prompt = data.get('prompt')
+    output = ai_generate.generate_pixel_art(prompt)
+    if output:
+        url = output['data'][0]['asset_url']
+        if url:
+            return jsonify({'message': 'Pixel art generated successfully', 'image_link': url}), 200
+        else:
+            return jsonify({'error': 'Failed to generate'}), 500
+    else:
+        return jsonify({'error': 'Image generation limit reached'}), 500
+
+@app.route('/upload_pixel_art', methods=['POST'])
+def upload_pixel_art():
+    name = request.form.get('name')
+    image_link = request.form.get('image_link')
+    try:
+        print(name)
+        print(image_link)
+        if image_link:
+            coords = db.get_random_free_coordinate(db.get_annotations())
+            db.update_annotations(image_link, coords[0], coords[1], name)
+            return jsonify({'message': 'Pixel art uploaded successfully', 'image_link': image_link}), 200
+        else:
+            return jsonify({'error': 'Failed to upload pixel art to Imgur'}), 500
+    except Exception as e:
+        return jsonify({'error': 'Failed to upload pixel art'}), 500
 
 @app.route('/annotations')
 def get_annotations():

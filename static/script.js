@@ -73,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
     }
+    
 
     function createPixel(x, y, color) {
         const rect = new Konva.Rect({
@@ -157,6 +158,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function submitKonvaImage() {
+        const submitButton = document.getElementById('submitButton');
+        submitButton.disabled = true;
         if(document.getElementById("nameInput").value.length == 0){
             alert("Fill in a name")
             return;
@@ -180,12 +183,34 @@ document.addEventListener('DOMContentLoaded', function () {
             return response.json();
         })
         .then(data => {
+            submitButton.disabled = false;
             console.log('Success:', data);
             showPopup(data.image_link)
         })
         .catch(error => {
+            submitButton.disabled = false;
             console.error('Error:', error);
         });
+    }
+    function resetEditor() {
+        // Clear the drawing layer
+        drawingLayer.destroyChildren();
+    
+        // Initialize the grid with white pixels again
+        const rows = stage.height() / pixelSize;
+        const cols = stage.width() / pixelSize;
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                createPixel(j, i, 'white');
+            }
+        }
+    
+        // Clear undo and redo stacks
+        undoStack.length = 0;
+        redoStack.length = 0;
+    
+        // Batch draw to improve performance
+        drawingLayer.batchDraw();
     }
     function dataURLtoFile(dataUrl, filename) {
         const arr = dataUrl.split(',');
@@ -264,10 +289,11 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             const annotationsList = document.getElementById('annotations-list');
             data.forEach(annotation => {
+                const imagePath = annotation.image_path.length > 100 ? annotation.image_path.substring(0, 100) + '...' : annotation.image_path;
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td class="border px-4 py-2">${annotation.name}</td>
-                    <td class="border px-4 py-2">${annotation.image_path}</td>
+                    <td class="border px-4 py-2"><a href="${annotation.image_path}" class="truncate inline-block max-w-xs overflow-hidden text-blue-500 hover:text-blue-700 focus:text-blue-700">${imagePath}</td>
                     <td class="border px-4 py-2">${annotation.x_coord}</td>
                     <td class="border px-4 py-2">${annotation.y_coord}</td>
                 `;
@@ -277,6 +303,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Add event listener to the submit button
     const submitButton = document.getElementById('submitButton');
     submitButton.addEventListener('click', submitKonvaImage);
+    const resetButton = document.getElementById('resetButton');
+    resetButton.addEventListener('click', resetEditor);
     document.querySelectorAll('.tab-btn').forEach(item => {
         item.addEventListener('click', event => {
             const tabContent = document.querySelectorAll('.tab-content');
@@ -306,4 +334,95 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Event listener to close the demo modal when close button is clicked
     closeDemoModalButton.addEventListener('click', closeDemoModal);
+
+    document.getElementById("generatePreviewButton").addEventListener("click", function() {
+        const prompt = document.getElementById("promptInput").value;
+        // Call a function to load the prompt and generate/display the preview (implementation needed)
+        loadPromptAndShowPreview(prompt);
+        
+        // Enable confirm upload button if there's a preview
+        document.getElementById("confirmUploadButton").disabled = false;
+        document.getElementById("download-btn").disabled = false;
+
+    });
+    
+
+
+        // Function to download the generated image
+        function downloadImage() {
+            const imgSrc = document.getElementById("pixel-preview").src;
+            const fileName = "pixel_art.png"; // You can customize the file name here
+
+            // Create a temporary anchor element
+            const a = document.createElement("a");
+            a.href = imgSrc;
+            a.download = fileName;
+
+            // Append the anchor element to the body and trigger the download
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    // Function to handle loading prompt and showing preview (implementation based on your backend logic)
+    function loadPromptAndShowPreview(prompt) {
+        fetch('/generate_pixel_art', {
+            method: 'POST',
+            body: JSON.stringify({ prompt: prompt }),
+            headers: { 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === 'Pixel art preview generated') {
+                const previewElement = document.getElementById("preview-pixel-art");
+                previewElement.classList.remove("hidden");
+                // Create an image element
+                const img = document.getElementById("pixel-preview");
+                // Set the src attribute to the image preview URL
+                img.src = data.image_link;
+                const downloadBtn = document.getElementById("download-btn");
+                downloadBtn.addEventListener("click", downloadImage);
+            } else {
+                alert("Image limit reached for the day")
+                console.error("Error generating preview:", data.error);
+                // Handle preview generation errors (optional)
+            }
+        });
+    }
+    
+    document.getElementById("confirmUploadButton").addEventListener("click", function() {
+        if(document.getElementById("nameInput").value.length == 0){
+            alert("Fill in a name")
+            return;
+        }
+        uploadDataToSever();
+        // Clear preview and disable button after upload
+        document.getElementById("preview-pixel-art").classList.add("hidden");
+        document.getElementById("confirmUploadButton").disabled = true;
+    });
+    
+    function uploadDataToSever() {
+        const name = document.getElementById("nameInput").value;
+        const imgSrc = document.getElementById("pixel-preview").src;
+        
+        const formData = new FormData();
+        formData.append("name", name);
+        formData.append("image_link", imgSrc); // Directly append image data
+        
+        fetch('/upload_pixel_art', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message === 'Pixel art uploaded successfully') {
+                console.log("Upload successful:", data.image_link);
+                // Handle successful upload (optional: show confirmation message)
+            } else {
+                console.error("Error uploading data:", data.error);
+                // Handle upload errors (optional: show error message to the user)
+            }
+        })
+        
+    }
+    
 });
