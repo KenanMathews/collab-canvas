@@ -48,6 +48,7 @@ def generate_pixel_art():
         else:
             return jsonify({'error': 'Failed to generate'}), 500
     except Exception as e:
+        print(e)
         return jsonify({'error': 'Image generation issue'}), 500
 
 @app.route('/upload_pixel_art', methods=['POST'])
