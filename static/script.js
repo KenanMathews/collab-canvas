@@ -1,4 +1,3 @@
-let confirmUnload = false;
 document.addEventListener('DOMContentLoaded', function () {
     const stage = new Konva.Stage({
         container: 'container',
