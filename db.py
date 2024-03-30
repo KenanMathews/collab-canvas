@@ -36,12 +36,17 @@ def update_generated_url(name, url):
     else:
         print(res.error)
 
-def get_annotations():
-    # Get yesterday's date at 12:00 AM UTC
-    today_utc = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+from datetime import datetime
 
-    # Construct query to fetch annotations created between yesterday and today in UTC
-    res = supabase.table('test-table').select('*').filter('created_at', 'gte', today_utc.isoformat()).execute()
+def get_today_annotations():
+    return get_annotations(datetime.utcnow().date())
+def get_annotations(date):
+    # Define start and end time for the given date
+    start_time = datetime.combine(date, datetime.min.time())
+    end_time = datetime.combine(date, datetime.max.time())
+
+    # Construct query to fetch annotations created between start and end time
+    res = supabase.table('test-table').select('*').filter('created_at', 'gte', start_time.isoformat()).filter('created_at', 'lte', end_time.isoformat()).execute()
 
     if res.data:
         annotations = res.data
@@ -68,6 +73,25 @@ def get_random_free_coordinate(annotations):
     else:
         print("No free coordinates available.")
         return None
+
+def get_annotation_dates():
+    # Fetch annotations from Supabase
+    res = supabase.table('test-table').select('created_at').execute()
+
+    if res.data:
+        annotation_dates = set()  # Using a set to store unique dates
+        for entry in res.data:
+            created_at_str = entry.get('created_at')
+            if created_at_str:
+                created_at = datetime.fromisoformat(created_at_str)
+                annotation_dates.add(created_at.date())
+        
+        return sorted(list(annotation_dates)) # Convert set to list before returning
+    else:
+        print("Failed to fetch annotations from Supabase.")
+        print(res)
+        return []
+
 
 # Example usage:
 #update_annotations(upload_folder_path, filepath, x_coord, y_coord, name)

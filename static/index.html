@@ -5,56 +5,119 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Collaborative Canvas</title>
     <link href="/static/dist/styles.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/spectrum-vanilla/dist/spectrum.min.css">
     <script src="https://cdn.jsdelivr.net/npm/konva@8.2.3/konva.min.js"></script>
+    <script src="https://unpkg.com/spectrum-vanilla/dist/spectrum.min.js"></script>
+
 </head>
 <body class="flex flex-col min-h-screen bg-white text-gray-900">
+    <div id="loading-container" class="fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center z-10">
+        <div class="text-white text-center">
+            <div class="flex flex-col items-center">
+                <div class="w-12 h-12 border-t-4 border-gray-200 rounded-full animate-spin"></div>
+                <div>
+                    <p>Loading Collaborative Canvas...</p>
+                    <p>Please wait...</p>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="/static/script.js"></script>
-    
     <header class="bg-gray-200 text-gray-800 py-4 relative">
         <div class="container mx-auto px-4 flex justify-between items-center">
             <h1 class="text-2xl font-bold">Collaborative Canvas</h1>
-            <button id="open-demo-modal-button" class="help-button absolute top-0 right-0 p-4 cursor-pointer bg-blue-500 text-white shadow-md hover:bg-blue-600">?</button>
+            <div class="flex items-center">
+                <div class="mr-4">
+                    <label for="nameInput" class="mr-2">Name:</label>
+                    <input type="text" id="nameInput" placeholder="Name"
+                        class="px-4 py-2 border border-gray-300 rounded-full focus:outline-none" />
+                </div>
+            </div>
+            <button id="open-demo-modal-button"
+                class="help-button fixed top-0 right-0 px-4 py-6 cursor-pointer bg-blue-500 text-white shadow-md hover:bg-blue-600">
+                ?
+            </button>
         </div>
     </header>
-    <div class="container mx-auto px-4 text-center my-2">
-        <label for="nameInput">Enter your name</label>
-        <input type="text" id="nameInput" placeholder="Name" class="mt-4 w-64 px-4 py-2 border border-gray-300 rounded-full focus:outline-none">
-    </div>
     <!-- Tabs -->
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-4 mt-2">
         <div class="flex justify-center">
             <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none tab-btn" data-target="editor-tab">Editor</button>
-            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l focus:outline-none tab-btn" data-target="prompt-tab">Prompt</button>
-            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l focus:outline-none tab-btn" data-target="preview-tab">Preview</button>
+            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l focus:outline-none tab-btn" data-target="prompt-tab">AI Generate</button>
+            <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-l focus:outline-none tab-btn" data-target="preview-tab">Canvas</button>
             <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-r focus:outline-none tab-btn" data-target="annotations-tab">Annotations List</button>
         </div>
     </div>
 
     <!-- Content -->
-    <div class="container mx-auto px-4 py-8 flex-1">
+    <div class="container mx-auto px-4 flex-1">
         <div id="editor-tab" class="tab-content">
+            <div class="flex justify-center">
+                <div id="draftButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-3 rounded mt-4 m-2 cursor-pointer flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                    <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                  </svg>
+                </div>
+                <div id="reloadButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-3 rounded mt-4 m-2 cursor-pointer flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>   
             <div class="flex justify-center">
                 <div id="container" class="border border-gray-300"></div>
             </div>
-            <div class="text-center mt-4">
-                <input type="color" id="colorPicker" class="mt-4">
+            <div class="flex justify-center m-2">
+                <input id="colorPicker" class="border border-gray-300 bg-gray-100 px-3 py-2 rounded-md focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="text-center">
                 <button id="resetButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Reset</button>
                 <button id="submitButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Upload to canvas</button>
-            </div>
+                <div id="canvasProgressBar" class="w-1/2 mx-auto mt-4 hidden">
+                    <div class="bg-gray-200 h-2 rounded overflow-hidden flex justify-center">
+                        <div class="w-full bg-gradient-to-r from-green-500 via-green-700 to-green-500 animate-pulse"></div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-md">Your image is being processed.....</p>
+                    </div>
+                </div>
+            </div>                    
         </div>
         <div id="prompt-tab" class="tab-content hidden">
             <div class="flex flex-col space-y-4">
                 <label for="promptInput" class="text-sm font-medium text-gray-700">Enter your prompt(limited prompts per day):</label>
                 <textarea id="promptInput" rows="5" class="rounded-lg border border-gray-300 p-2.5 w-full focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"></textarea>
                 <button id="generatePreviewButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none">Generate Preview</button>
+                <div id="generatePreviewProgressBar" class="w-1/2 mx-auto mt-4 hidden">
+                    <div class="bg-gray-200 h-2 rounded overflow-hidden flex justify-center">
+                        <div class="w-full bg-gradient-to-r from-green-500 via-green-700 to-green-500 animate-pulse"></div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-md">Your image is being processed.....</p>
+                    </div>
+                </div>
             </div>
             <div id="preview-pixel-art" class="border border-gray-300 hidden"><img id="pixel-preview"/></div>
             <div class="flex justify-end mt-4">
                 <button id="download-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none disabled">Download Image</button>
                 <button id="confirmUploadButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded focus:outline-none disabled">Confirm Upload</button>
+                <div id="confirmUploadProgressBar" class="w-1/2 mx-auto mt-4 hidden">
+                    <div class="bg-gray-200 h-2 rounded overflow-hidden flex justify-center">
+                        <div class="w-full bg-gradient-to-r from-green-500 via-green-700 to-green-500 animate-pulse"></div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <p class="text-md">Your image is being uploaded.....</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div id="preview-tab" class="tab-content hidden">
+            <div class="flex justify-center items-center m-2">
+                <select id="date-select" class="p-2 border border-gray-300 rounded-md mr-4"></select>
+                <button id="update-preview-btn" class="px-4 py-2 bg-blue-500 text-white rounded-md mr-4 hover:bg-blue-600 focus:outline-none focus:bg-blue-600">Update Preview</button>
+                <button id="download-preview-btn" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:bg-green-600 hidden">Download Preview</button>
+            </div>
             <div id="preview-container" class="border border-gray-300 flex justify-center"></div>
         </div>
         <div id="annotations-tab" class="hidden tab-content">
@@ -87,23 +150,79 @@
             </div>
         </div>
     </div>
+    <!-- Common Info Modal -->
+    <div id="info-modal" class="modal-overlay fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
+        <div class="modal bg-white p-8 rounded shadow-lg">
+            <!-- Dismiss Icon -->
+            <span id="close-info-modal" class="close-modal absolute top-0 right-0 p-4 cursor-pointer">&times;</span>
+            <!-- Info Message Content -->
+            <h2 id="info-modal-title" class="text-lg font-semibold mb-4"></h2>
+            <p id="info-modal-paragraph" class="mb-4"></p>
+            <!-- Confirm and Dismiss Buttons -->
+            <div class="flex justify-between">
+                <button id="confirm-info-modal" class="text-xs bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded focus:outline-none hidden">Confirm</button>
+                <button id="dismiss-info-modal" class="text-xs bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+    function loadInfoData(title, paragraph) {
+        // Get references to the title and paragraph elements in the modal
+        const titleElement = document.getElementById('info-modal-title');
+        const paragraphElement = document.getElementById('info-modal-paragraph');
+
+        // Set the title and paragraph content
+        titleElement.textContent = title;
+        paragraphElement.textContent = paragraph;
+
+        // Show the modal
+        const infoModal = document.getElementById('info-modal');
+        infoModal.classList.remove('hidden');
+    }
+
+    // Example usage:
+    // loadInfoData("Title Example", "This is an example paragraph for the info modal.");
+</script>
+
+
 
     <div id="demo-modal" class="modal-overlay fixed top-0 left-0 w-full h-full bg-gray-800 bg-opacity-50 flex justify-center items-center hidden">
         <div class="modal bg-white p-8 rounded shadow-lg">
             <span id="close-demo-modal" class="close-modal absolute top-0 right-0 p-4 cursor-pointer">&times;</span>
-            <h2 class="text-lg font-semibold mb-4">Welcome to the Collaborative Canvas!</h2>
-            <p>Welcome to Collaborative Canvas! Here, you can freely express your creativity on a large canvas by drawing in the editor. Your pixel art creations can be posted randomly anywhere on the canvas and utilize our text-to-image generator to instantly create pixel art images. Remember, the canvas resets daily, giving you endless opportunities to fill it with your imagination once again. Happy creating!</p>
-            <p class="mb-4">To get started:</p>
-            <ol class="list-decimal pl-6">
-                <li class="mb-2">Click on the "Editor" tab.</li>
-                <li class="mb-2">Upload an image</li>
-                <li class="mb-2">Switch to the "Preview" tab to view your image.</li>
-            </ol>
-            <div class="mt-4 flex justify-end">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold mb-2">Welcome to the Collaborative Canvas!</h2>
+                <hr class="mb-4">
+            </div>
+            <div class="mb-6">
+                <h3 class="text-md font-semibold mb-2">Editor Tab:</h3>
+                <p>Start by drawing your pixel art in the Editor tab. Once you're done, upload your drawing to the Collaborative Canvas. Previews of your pixel art will be available in the Canvas tab.</p>
+                <ol class="list-decimal pl-6 mt-2">
+                    <li class="mb-2">Click on the "Editor" tab.</li>
+                    <li class="mb-2">Draw on the canvas.</li>
+                    <li class="mb-2">Upload your drawing to the Collaborative Canvas.</li>
+                    <li class="mb-2">Switch to the "Canvas" tab to view your uploaded image.</li>
+                </ol>
+            </div>
+            <hr class="my-4">
+            <div class="mb-6">
+                <h3 class="text-md font-semibold mb-2">AI Generate Tab:</h3>
+                <p>Alternatively, you can use the AI Generate tab to create pixel art images. Fill a prompt to generate a pixel art image. You can then download the generated preview and/or upload it to the common canvas.</p>
+                <ol class="list-decimal pl-6 mt-2">
+                    <li class="mb-2">Click on the "AI Generate" tab.</li>
+                    <li class="mb-2">Fill a prompt to generate a pixel art image.</li>
+                    <li class="mb-2">Download the generated preview and/or upload it to the common canvas.</li>
+                </ol>
+            </div>
+            <div class="mt-6 flex justify-end">
                 <button id="close-demo-modal-button" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none">Got it!</button>
             </div>
+            <p class="text-sm mt-6">Powered by <span class="font-bold">Konva.js</span> and <span class="font-bold">Tailwind CSS</span>. <br> Konva.js - <a href="https://konvajs.org/" target="_blank" rel="noopener noreferrer">https://konvajs.org/</a> <br> Tailwind CSS - <a href="https://tailwindcss.com/" target="_blank" rel="noopener noreferrer">https://tailwindcss.com/</a></p>
         </div>
     </div>
+    
+    </div>
+        
     <!-- Footer -->
     <footer class="bg-gray-200 text-gray-800 py-4">
         <div class="container mx-auto px-4 text-center">

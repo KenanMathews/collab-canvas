@@ -1,3 +1,4 @@
+let confirmUnload = false;
 document.addEventListener('DOMContentLoaded', function () {
     const stage = new Konva.Stage({
         container: 'container',
@@ -121,7 +122,53 @@ document.addEventListener('DOMContentLoaded', function () {
             addToUndoStack();
         }
     }
+    // Function to save draft
+        function saveDraft() {
+            // Initialize an array to store the drawing state
+            const drawingState = [];
 
+            // Convert children to an array and iterate through them
+            const children = drawingLayer.children;
+            children.forEach(child => {
+                // Extract relevant information from each shape
+                const pixel = {
+                    x: child.x(),
+                    y: child.y(),
+                    color: child.fill()
+                };
+                // Add the pixel to the drawing state array
+                drawingState.push(pixel);
+            });
+
+            // Serialize the drawing state to JSON
+            const serializedDrawingState = JSON.stringify(drawingState);
+
+            // Save the serialized drawing state to local storage
+            localStorage.setItem('drawingDraft', serializedDrawingState);
+
+            console.log('Draft saved');
+        }
+
+        // Function to reload draft
+        function reloadDraft() {
+            // Retrieve drawing state from local storage
+            const savedDrawingState = localStorage.getItem('drawingDraft');
+            if (savedDrawingState) {
+                // Parse saved drawing state from JSON
+                const drawingState = JSON.parse(savedDrawingState);
+                // Clear the existing drawing
+                drawingLayer.destroyChildren();
+                // Loop through the saved drawing state and recreate the drawing
+                drawingState.forEach(pixel => {
+                    createPixel(pixel.x / pixelSize, pixel.y / pixelSize, pixel.color);
+                });
+                // Batch redraw to improve performance
+                drawingLayer.batchDraw();
+                console.log('Draft reloaded');
+            } else {
+                console.log('No draft found');
+            }
+        }
     function getPixelAt(x, y) {
         const pixels = drawingLayer.children.slice();
 
@@ -179,6 +226,8 @@ document.addEventListener('DOMContentLoaded', function () {
     function submitKonvaImage() {
         const submitButton = document.getElementById('submitButton');
         submitButton.disabled = true;
+        const canvasProgressBar = document.getElementById('canvasProgressBar');
+        canvasProgressBar.classList.remove("hidden");
         if(document.getElementById("nameInput").value.length == 0){
             alert("Fill in a name")
             return;
@@ -196,20 +245,26 @@ document.addEventListener('DOMContentLoaded', function () {
             body: formData
         })
         .then(response => {
+            const canvasProgressBar = document.getElementById('canvasProgressBar');
+            canvasProgressBar.classList.add("hidden");
+            submitButton.disabled = false;
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
             return response.json();
         })
         .then(data => {
-            submitButton.disabled = false;
             console.log('Success:', data);
             showPopup(data.image_link);
             resetEditor();
         })
         .catch(error => {
+            const canvasProgressBar = document.getElementById('canvasProgressBar');
+            canvasProgressBar.classList.add("hidden");
             submitButton.disabled = false;
             console.error('Error:', error);
+        }).finally(()=>{
+            loadInfoInPage()
         });
     }
     function resetEditor() {
@@ -281,6 +336,8 @@ document.addEventListener('DOMContentLoaded', function () {
         layer.add(group);
     }
         
+    const dateSelect = document.getElementById('date-select');
+    const updatePreviewBtn = document.getElementById('update-preview-btn');
 
     function loadPreviewImage(){
         fetchAnnotations()
@@ -298,12 +355,37 @@ document.addEventListener('DOMContentLoaded', function () {
             return [];
         }
     }
+    async function fetchAnnotationDates() {
+        try {
+            const response = await fetch('/annotation_dates');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching annotations:', error);
+            return [];
+        }
+    }
+    async function fetchAnnotationsForDate(selectedDate) {
+        try {
+            const response = await fetch(`/prev_annotations?date=${selectedDate}`);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching annotations:', error);
+            return [];
+        }
+    }
+
     function showPopup(url) {
         document.getElementById("popupUrl").innerText = url;
         document.getElementById("popupUrl").href = url;
         document.getElementById("popup").classList.remove("hidden");
     }
-    function loadInfoInPage(){
+    async function loadInfoInPage(){
         loadPreviewImage()
         // Usage:
         fetchAnnotations()
@@ -321,13 +403,46 @@ document.addEventListener('DOMContentLoaded', function () {
                 annotationsList.appendChild(row);
             });
         });
+        const annotationDates = await fetchAnnotationDates();
+        annotationDates.forEach(date => {
+            console.log(date);
+            const option = document.createElement('option');
+            option.value = date;
+            option.textContent = date;
+            dateSelect.appendChild(option);
+        });
+        const downloadBtn = document.getElementById("download-preview-btn");
+        downloadBtn.addEventListener("click", downloadPreviewImage);
+
+        
+        // Add event listener to update preview button
+        updatePreviewBtn.addEventListener('click', async () => {
+            const selectedDate = dateSelect.value;
+            // Fetch data for selected date and update preview container
+            const annotationsForDate = await fetchAnnotationsForDate(selectedDate);
+            preview_stage.destroyChildren();
+            addImagesFromJSON(annotationsForDate,preview_stage);
+            preview_stage.draw();
+            const preview_container = document.getElementById("preview-container");
+            preview_container.scrollIntoView({ 
+                behavior: 'smooth' 
+              });
+        });
+        document.getElementById("loading-container").classList.add("hidden");
+    }
+    function resetEditorConfirm(){
+        loadInfoPopup("Reset Editor","Are you sure?",function(){
+            resetEditor();
+            const infoModal = document.getElementById('info-modal');
+            infoModal.classList.add('hidden');
+        });
     }
     loadInfoInPage();
     // Add event listener to the submit button
     const submitButton = document.getElementById('submitButton');
     submitButton.addEventListener('click', submitKonvaImage);
     const resetButton = document.getElementById('resetButton');
-    resetButton.addEventListener('click', resetEditor);
+    resetButton.addEventListener('click', resetEditorConfirm);
     document.querySelectorAll('.tab-btn').forEach(item => {
         item.addEventListener('click', event => {
             const tabContent = document.querySelectorAll('.tab-content');
@@ -377,26 +492,38 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("download-btn").disabled = false;
 
     });
+
+    function removeClickListener(element) {
+        const newElement = element.cloneNode(true); // Create a deep clone of the element to remove listeners
+        element.parentNode.replaceChild(newElement, element); // Replace the original element with the clone
+        return newElement; // Return the new element without listeners
+    }
     
+    // Function to download the generated image
+    function downloadImage(imgSrc) {
+        const fileName = "pixel_art.png"; // You can customize the file name here
 
+        // Create a temporary anchor element
+        const a = document.createElement("a");
+        a.href = imgSrc;
+        a.download = fileName;
 
-        // Function to download the generated image
-        function downloadImage() {
-            const imgSrc = document.getElementById("pixel-preview").src;
-            const fileName = "pixel_art.png"; // You can customize the file name here
+        // Append the anchor element to the body and trigger the download
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+    function downloadPreviewImage() {
+        exportAsPNG(preview_stage);                 // for Konva canvas
+    }
+    function downloadPixelPreviewImage() {          // for <img/> element
+        downloadImage(document.getElementById("pixel-preview"))
+    }
 
-            // Create a temporary anchor element
-            const a = document.createElement("a");
-            a.href = imgSrc;
-            a.download = fileName;
-
-            // Append the anchor element to the body and trigger the download
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-        }
     // Function to handle loading prompt and showing preview (implementation based on your backend logic)
     function loadPromptAndShowPreview(prompt,name) {
+        const loader = document.getElementById("generatePreviewProgressBar");
+        loader.classList.remove("hidden");
         fetch('/generate_pixel_art', {
             method: 'POST',
             body: JSON.stringify({ prompt: prompt, name, name }),
@@ -404,6 +531,8 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
+            const loader = document.getElementById("generatePreviewProgressBar");
+            loader.classList.add("hidden");
             if (data.message === "Pixel art generated successfully") {
                 const previewElement = document.getElementById("preview-pixel-art");
                 previewElement.classList.remove("hidden");
@@ -412,13 +541,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Set the src attribute to the image preview URL
                 img.src = data.image_link;
                 const downloadBtn = document.getElementById("download-btn");
-                downloadBtn.addEventListener("click", downloadImage);
+                const updatedDownloadBtn = removeClickListener(downloadBtn);
+                updatedDownloadBtn.addEventListener("click", downloadPixelPreviewImage);
+                img.scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
             } else {
                 alert("Image limit reached for the day")
                 console.error("Error generating preview:", data.error);
                 // Handle preview generation errors (optional)
             }
-            loadInfoInPage();
         });
     }
     
@@ -427,6 +559,8 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("Fill in a name")
             return;
         }
+        const loader = document.getElementById("confirmUploadProgressBar");
+        loader.classList.remove("hidden");
         uploadDataToServer();
         // Clear preview and disable button after upload
         document.getElementById("preview-pixel-art").classList.add("hidden");
@@ -449,6 +583,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(data => {
             if (data.message === 'Pixel art uploaded successfully') {
                 console.log("Upload successful:", data.image_link);
+                const loader = document.getElementById("confirmUploadProgressBar");
+                loader.classList.add("hidden");
                 // Handle successful upload (optional: show confirmation message)
             } else {
                 console.error("Error uploading data:", data.error);
@@ -458,5 +594,79 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         
     }
+    function exportAsPNG(stage) {
+        // Get the data URL of the canvas
+        const dataURL = stage.toDataURL({ mimeType: 'image/png' });
+    
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = dataURL;
+        link.download = 'canvas.png';
+    
+        // Simulate a click on the link to trigger the download
+        document.body.appendChild(link);
+        link.click();
+    
+        // Clean up
+        document.body.removeChild(link);
+    }
+    const infoModal = document.getElementById('info-modal');
+    const dismissButton = document.getElementById('dismiss-info-modal');
+
+    // Function to close the modal
+    function closeModal() {
+        infoModal.classList.add('hidden'); // Hide the modal
+    }
+
+    // Add click event listener to the dismiss button
+    dismissButton.addEventListener('click', closeModal);
+
+    // Optional: Close the modal when the close icon is clicked
+    const closeIcon = document.getElementById('close-info-modal');
+    closeIcon.addEventListener('click', closeModal);
+    function loadInfoPopup(title, paragraph, callback) {
+        // Get references to the title and paragraph elements in the modal
+        const titleElement = document.getElementById('info-modal-title');
+        const paragraphElement = document.getElementById('info-modal-paragraph');
+        const confirmButton = document.getElementById('confirm-info-modal');
+
+        // Set the title and paragraph content
+        titleElement.textContent = title;
+        paragraphElement.textContent = paragraph;
+
+        // Show the modal
+        const infoModal = document.getElementById('info-modal');
+        infoModal.classList.remove('hidden');
+
+        // Check if a callback function is provided
+        if (typeof callback === 'function') {
+            // Show the confirm button
+            confirmButton.classList.remove('hidden');
+            // Add click event listener to the confirm button
+            confirmButton.addEventListener('click', callback);
+        } else {
+            // Hide the confirm button if no callback function is provided
+            confirmButton.classList.add('hidden');
+        }
+    }
+    Spectrum.getInstance('#colorPicker', {
+        showSelectionPalette: true,
+        color: "#0000000",
+        showAlpha: false
+    });
+    const draftBtn = document.getElementById("draftButton");
+    draftBtn.addEventListener("click", saveDraft);
+    const reloadButton = document.getElementById("reloadButton");
+    reloadButton.addEventListener("click", reloadDraft);
+    // Call reloadDraft when the page loads
+    window.addEventListener('load', function() {
+        reloadDraft();
+    });
+    window.addEventListener('beforeunload', function(event) {
+        const savedDrawingState = localStorage.getItem('drawingDraft');
+        if (!savedDrawingState) {
+            saveDraft();
+        }
+    });
     
 });

@@ -2,6 +2,8 @@ from flask import Flask, request, jsonify
 import imgur
 import db
 import ai_generate
+from datetime import datetime
+
 
 app = Flask(__name__)
 ALLOWED_EXTENSIONS = {'png'}
@@ -40,16 +42,20 @@ def generate_pixel_art():
     data = request.get_json()
     name = data.get('name')
     prompt = data.get('prompt')
-    try:
-        url = ai_generate.generate_pixel_art(prompt)
-        if url:
-            db.update_generated_url(name,url)
-            return jsonify({'message': 'Pixel art generated successfully', 'image_link': url}), 200
-        else:
-            return jsonify({'error': 'Failed to generate'}), 500
-    except Exception as e:
-        print(e)
+    coords = db.get_random_free_coordinate(db.get_annotations())
+    if coords:
+        try:
+            url = ai_generate.generate_pixel_art(prompt)
+            if url:
+                db.update_generated_url(name,url)
+                return jsonify({'message': 'Pixel art generated successfully', 'image_link': url}), 200
+            else:
+                return jsonify({'error': 'Failed to generate'}), 500
+        except Exception as e:
+            print(e)
         return jsonify({'error': 'Image generation issue'}), 500
+    else:
+        return jsonify({'error': 'No free space on canvas'}), 500
 
 @app.route('/upload_pixel_art', methods=['POST'])
 def upload_pixel_art():
@@ -68,12 +74,25 @@ def upload_pixel_art():
 
 @app.route('/annotations')
 def get_annotations():
-    annotations = db.get_annotations()
+    annotations = db.get_today_annotations()
     return jsonify(annotations)
+
+@app.route('/prev_annotations')
+def prev_annotations():
+    selected_date_str = request.args.get('date')
+    if selected_date_str:
+        selected_date = datetime.strptime(selected_date_str, '%a, %d %b %Y %H:%M:%S GMT').date()
+        annotations_for_date =  db.get_annotations(selected_date)
+        return jsonify(annotations_for_date)
+
+@app.route('/annotation_dates')
+def get_annotation_dates():
+    dates_with_annotations = db.get_annotation_dates()
+    return jsonify(dates_with_annotations)
 
 @app.route('/get_free_coordinates')
 def get_free_coordinates():
-    coords = db.get_random_free_coordinate(db.get_annotations())
+    coords = db.get_random_free_coordinate(db.get_today_annotations())
     return jsonify({'message':'Values fetched','x': coords[0], 'y':coords[1]}), 200
 
 
