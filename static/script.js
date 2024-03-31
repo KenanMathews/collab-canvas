@@ -710,6 +710,15 @@ document.addEventListener('DOMContentLoaded', function () {
     draftBtn.addEventListener("click", saveDraft);
     const reloadButton = document.getElementById("reloadButton");
     reloadButton.addEventListener("click", reloadDraft);
+    tippy(draftBtn, {
+        content: 'Create a draft',
+        placement: 'top'
+    });
+    
+    tippy(reloadButton, {
+        content: 'Load from draft',
+        placement: 'top',
+    });
     // Call reloadDraft when the page loads
     window.addEventListener('load', function() {
         reloadDraft();
