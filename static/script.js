@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
+    const grid_comp_width = 400;
+    const grid_comp_height = 400;
     const stage = new Konva.Stage({
         container: 'container',
         width: 300,
@@ -221,8 +223,44 @@ document.addEventListener('DOMContentLoaded', function () {
             drawingLayer.batchDraw();
         }
     }
+    async function loadCoordinatesforUpload(){
+        if(document.getElementById("nameInput").value.length == 0){
+            alert("Fill in a name")
+            return;
+        }
+        const userName = document.getElementById("nameInput").value;
+        // Save the serialized drawing state to local storage
+        localStorage.setItem('userName', document.getElementById("nameInput").value);
+        try {
+                //convert matrix col and row idx to relative coordinate
+                const response = await fetch('/get_all_free_coordinates', {
+                    headers: {
+                        'Content-Type': 'application/json' // Set Content-Type to JSON
+                    },
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch');
+                }
+        
+                const data = await response.json();
+                loadInfoPopup("Canvas Grid",'<p class="mb-4">This grid represents the available and occupied locations on the canvas:</p> <div class="flex space-x-4 mb-4"> <div class="flex items-center space-x-2"> <div class="w-4 h-4 bg-green-600"></div> <div>Available Location</div> </div> <div class="flex items-center space-x-2"> <div class="w-4 h-4 bg-red-600"></div> <div>Occupied Location</div> </div> </div><div id="canvas-grid-container" class="max-w-fit w-auto mx-auto"></div>')
+                createGrid(4,4,document.getElementById("canvas-grid-container"));
+                const allowed_cords = data.allowed_coords;
+                allowed_cords.forEach(function (coords) {
+                    updateGrid(coords[1],coords[0],{ class: "bg-green-600 hover:bg-green-700" })
+                });
+                const used_cords = data.used_coords;       
+                used_cords.forEach(function (coords) {
+                    updateGrid(coords[1],coords[0],{ class: "bg-red-600 hover:bg-red-700" })
+                });         
+            } 
+        catch (error) {
+            console.error('Error:', error);
+        }
+    }
     
-    function submitKonvaImage() {
+    function submitKonvaImage(i, j) {
         const submitButton = document.getElementById('submitButton');
         submitButton.disabled = true;
         const canvasProgressBar = document.getElementById('canvasProgressBar');
@@ -238,6 +276,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('name', document.getElementById("nameInput").value);
+        formData.append('x', j);
+        formData.append('y', i);
 
         fetch('/upload', {
             method: 'POST',
@@ -320,8 +360,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     x: jsonObj.x_coord,         // X coordinate from JSON object
                     y: jsonObj.y_coord,         // Y coordinate from JSON object
                     image: imageObj,
-                    width: 400,           // Image width (modify as needed)
-                    height: 400           // Image height (modify as needed)
+                    width: grid_comp_width,           // Image width (modify as needed)
+                    height: grid_comp_height           // Image height (modify as needed)
                 });
     
                 // Add the image to the group
@@ -390,6 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetchAnnotations()
         .then(data => {
             const annotationsList = document.getElementById('annotations-list');
+            annotationsList.innerText = '';
             data.forEach(annotation => {
                 const imagePath = annotation.image_path.length > 100 ? annotation.image_path.substring(0, 100) + '...' : annotation.image_path;
                 const row = document.createElement('tr');
@@ -439,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadInfoInPage();
     // Add event listener to the submit button
     const submitButton = document.getElementById('submitButton');
-    submitButton.addEventListener('click', submitKonvaImage);
+    submitButton.addEventListener('click', loadCoordinatesforUpload);
     const resetButton = document.getElementById('resetButton');
     resetButton.addEventListener('click', resetEditorConfirm);
     document.querySelectorAll('.tab-btn').forEach(item => {
@@ -631,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Set the title and paragraph content
         titleElement.textContent = title;
-        paragraphElement.textContent = paragraph;
+        paragraphElement.innerHTML = paragraph;
 
         // Show the modal
         const infoModal = document.getElementById('info-modal');
@@ -660,6 +701,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // Call reloadDraft when the page loads
     window.addEventListener('load', function() {
         reloadDraft();
+        const userName = localStorage.getItem('userName');
+        document.getElementById("nameInput").value = userName;
     });
     window.addEventListener('beforeunload', function(event) {
         const savedDrawingState = localStorage.getItem('drawingDraft');
@@ -667,5 +710,81 @@ document.addEventListener('DOMContentLoaded', function () {
             saveDraft();
         }
     });
+    allowed_grid_cols = ['grid-cols-1','grid-cols-2','grid-cols-3','grid-cols-4','grid-cols-5','grid-cols-6','grid-cols-7','grid-cols-8',]
+    function createGrid(M, N, element) {
+        const gridContainer = document.createElement('div');
+        gridContainer.setAttribute("id", "canvas-grid");
+        gridContainer.classList.add('grid', 'grid-cols-' + N, 'gap-4');
+    
+        for (let i = 0; i < M; i++) {
+            for (let j = 0; j < N; j++) {
+                const gridItem = document.createElement('div');
+                gridItem.setAttribute("data-row", i);
+                gridItem.setAttribute("data-col", j);
+                gridItem.classList.add('grid-item', 'w-20', 'h-20', 'bg-gray-200', 'border', 'border-gray-300', 'rounded-md', 'flex', 'items-center', 'justify-center', 'transition-colors', 'duration-300');
+                gridContainer.appendChild(gridItem);
+            }
+        }
+        element.innerHTML = gridContainer.outerHTML;
+        const items = element.querySelectorAll('.grid-item')
+        items.forEach(el => el.addEventListener('click', event => {
+            if(event.target.classList.contains("bg-green-600")){
+                checkIfGridLocationFree(event.target.getAttribute("data-row"),event.target.getAttribute("data-col"))
+            }else{
+                alert("Location already occupied");
+            }
+        }));
+    }
+    let isBlocked = false
+    async function checkIfGridLocationFree(i, j) {
+        try {
+            if(!isBlocked){
+                isBlocked = true
+                //convert matrix col and row idx to relative coordinate
+                const formData = { x: j, y: i }; // Data to be sent
+                const response = await fetch('/check_free_coordinates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json' // Set Content-Type to JSON
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch');
+                }
+        
+                const data = await response.json();
+        
+                if (data.isFree) {
+                    submitKonvaImage(i,j);
+                    closeModal();
+                } else {
+                    updateGrid(i, j, { class: "bg-red-600 hover:bg-red-700" }); // Update class if location is occupied
+                }
+                isBlocked = false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    }    
+    
+    function updateGrid(rowIndex, colIndex, updateData) {
+        const gridItems = document.querySelectorAll('.grid-item');
+        const n = 4;
+        const index = (rowIndex * n) + colIndex;
+        console.log(index)
+        if (index < gridItems.length) {
+            const gridItem = gridItems[index];
+            if (updateData.class) {
+                gridItem.classList.add(...updateData.class.split(' '));
+            }
+            if (updateData.innerText) {
+                gridItem.innerText = updateData.innerText;
+            }
+        } else {
+            console.error('Index out of range.');
+        }
+    }
     
 });

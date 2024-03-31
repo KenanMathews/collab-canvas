@@ -7,6 +7,10 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+max_x = 1600
+max_y = 1600
+step = 400
+
 import random
 
 def update_annotations(filepath, x_coord, y_coord, name):
@@ -56,14 +60,41 @@ def get_annotations(date):
         print(res)
         return []
 
-def get_random_free_coordinate(annotations):
+def convert_coordinates(x, y):
+    converted_x = x // step
+    converted_y = y // step
+    return converted_x, converted_y
+
+def reverse_convert_coordinates(converted_x, converted_y):
+    x = converted_x * step
+    y = converted_y * step
+    return x, y
+
+def convert_all_coordinates(coordinates):
+    arr = []
+    for coordinate in coordinates:
+        arr.append(convert_coordinates(coordinate[0],coordinate[1]))
+    return arr
+
+def get_all_free_coordinates():
+    annotations = get_today_annotations()
+    all_coordinates = [(anno['x_coord'], anno['y_coord']) for anno in annotations]
+    all_possible_coordinates = [(i, j) for i in range(0, max_x, step) for j in range(0, max_y, step)]
+    free_coordinates = list(set(all_possible_coordinates) - set(all_coordinates))   
+    return {"allowed_coordinates":convert_all_coordinates(free_coordinates),"used_coordinates":convert_all_coordinates(all_coordinates)}
+def check_if_coordinate_free(x,y):
+    annotations = get_today_annotations()
+    all_coordinates = [(anno['x_coord'], anno['y_coord']) for anno in annotations]
+    all_possible_coordinates = [(i, j) for i in range(0, max_x, step) for j in range(0, max_y, step)]
+    free_coordinates = list(set(all_possible_coordinates) - set(all_coordinates))
+    return reverse_convert_coordinates(x, y) in free_coordinates
+
+def get_random_free_coordinate():
+    annotations = get_today_annotations()
     # Assuming annotations is a list of dictionaries containing 'x' and 'y' coordinates
     all_coordinates = [(anno['x_coord'], anno['y_coord']) for anno in annotations]
 
     # Generate all possible coordinates in your grid
-    max_x = 1600
-    max_y = 1600
-    step = 400
     all_possible_coordinates = [(x, y) for x in range(0, max_x, step) for y in range(0, max_y, step)]
 
     # Filter out used coordinates
