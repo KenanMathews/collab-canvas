@@ -231,33 +231,36 @@ document.addEventListener('DOMContentLoaded', function () {
         const userName = document.getElementById("nameInput").value;
         // Save the serialized drawing state to local storage
         localStorage.setItem('userName', document.getElementById("nameInput").value);
+        createAndLoadGridInfo(0);
+    }
+    async function createAndLoadGridInfo(mode){
         try {
-                //convert matrix col and row idx to relative coordinate
-                const response = await fetch('/get_all_free_coordinates', {
-                    headers: {
-                        'Content-Type': 'application/json' // Set Content-Type to JSON
-                    },
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Failed to fetch');
-                }
-        
-                const data = await response.json();
-                loadInfoPopup("Canvas Grid",'<p class="mb-4">This grid represents the available and occupied locations on the canvas:</p> <div class="flex space-x-4 mb-4"> <div class="flex items-center space-x-2"> <div class="w-4 h-4 bg-green-600"></div> <div>Available Location</div> </div> <div class="flex items-center space-x-2"> <div class="w-4 h-4 bg-red-600"></div> <div>Occupied Location</div> </div> </div><div id="canvas-grid-container" class="max-w-fit w-auto mx-auto"></div>')
-                createGrid(4,4,document.getElementById("canvas-grid-container"));
-                const allowed_cords = data.allowed_coords;
-                allowed_cords.forEach(function (coords) {
-                    updateGrid(coords[1],coords[0],{ class: "bg-green-600 hover:bg-green-700" })
-                });
-                const used_cords = data.used_coords;       
-                used_cords.forEach(function (coords) {
-                    updateGrid(coords[1],coords[0],{ class: "bg-red-600 hover:bg-red-700" })
-                });         
-            } 
-        catch (error) {
-            console.error('Error:', error);
-        }
+            //convert matrix col and row idx to relative coordinate
+            const response = await fetch('/get_all_free_coordinates', {
+                headers: {
+                    'Content-Type': 'application/json' // Set Content-Type to JSON
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+            }
+    
+            const data = await response.json();
+            loadInfoPopup("Canvas Grid",'<p class="mb-4">This grid represents the available and occupied locations on the canvas:</p> <div class="flex space-x-4 mb-4"> <div class="flex items-center space-x-2"> <div class="w-4 h-4 bg-green-600"></div> <div>Available Location</div> </div> <div class="flex items-center space-x-2"> <div class="w-4 h-4 bg-red-600"></div> <div>Occupied Location</div> </div> </div><div id="canvas-grid-container" class="max-w-fit w-auto mx-auto"></div>')
+            createGrid(4,4,document.getElementById("canvas-grid-container"),mode);
+            const allowed_cords = data.allowed_coords;
+            allowed_cords.forEach(function (coords) {
+                updateGrid(coords[1],coords[0],{ class: "bg-green-600 hover:bg-green-700" })
+            });
+            const used_cords = data.used_coords;       
+            used_cords.forEach(function (coords) {
+                updateGrid(coords[1],coords[0],{ class: "bg-red-600 hover:bg-red-700" })
+            });         
+        } 
+    catch (error) {
+        console.error('Error:', error);
+    }
     }
     
     function submitKonvaImage(i, j) {
@@ -445,7 +448,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         const annotationDates = await fetchAnnotationDates();
         annotationDates.forEach(date => {
-            console.log(date);
             const option = document.createElement('option');
             option.value = date;
             option.textContent = date;
@@ -514,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function () {
     closeDemoModalButton.addEventListener('click', closeDemoModal);
 
     document.getElementById("generatePreviewButton").addEventListener("click", function() {
+        document.getElementById("generatePreviewButton").disabled = true;
         if(document.getElementById("nameInput").value.length == 0){
             alert("Fill in a name")
             return;
@@ -571,6 +574,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .then(response => response.json())
         .then(data => {
+            document.getElementById("generatePreviewButton").disabled = false;
             const loader = document.getElementById("generatePreviewProgressBar");
             loader.classList.add("hidden");
             if (data.message === "Pixel art generated successfully") {
@@ -599,21 +603,29 @@ document.addEventListener('DOMContentLoaded', function () {
             alert("Fill in a name")
             return;
         }
+        const userName = document.getElementById("nameInput").value;
+        // Save the serialized drawing state to local storage
+        localStorage.setItem('userName', document.getElementById("nameInput").value);
+        createAndLoadGridInfo(1);
+    });
+    function doAfterReserve(i,j){
         const loader = document.getElementById("confirmUploadProgressBar");
         loader.classList.remove("hidden");
-        uploadDataToServer();
+        uploadDataToServer(i,j);
         // Clear preview and disable button after upload
         document.getElementById("preview-pixel-art").classList.add("hidden");
         document.getElementById("confirmUploadButton").disabled = true;
-    });
+    }
     
-    function uploadDataToServer() {
+    function uploadDataToServer(i,j) {
         const name = document.getElementById("nameInput").value;
         const imgSrc = document.getElementById("pixel-preview").src;
         
         const formData = new FormData();
         formData.append("name", name);
         formData.append("image_link", imgSrc); // Directly append image data
+        formData.append('x', j);
+        formData.append('y', i);
         
         fetch('/upload_pixel_art', {
             method: 'POST',
@@ -711,7 +723,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
     allowed_grid_cols = ['grid-cols-1','grid-cols-2','grid-cols-3','grid-cols-4','grid-cols-5','grid-cols-6','grid-cols-7','grid-cols-8',]
-    function createGrid(M, N, element) {
+    function createGrid(M, N, element,mode) {
         const gridContainer = document.createElement('div');
         gridContainer.setAttribute("id", "canvas-grid");
         gridContainer.classList.add('grid', 'grid-cols-' + N, 'gap-4');
@@ -729,14 +741,14 @@ document.addEventListener('DOMContentLoaded', function () {
         const items = element.querySelectorAll('.grid-item')
         items.forEach(el => el.addEventListener('click', event => {
             if(event.target.classList.contains("bg-green-600")){
-                checkIfGridLocationFree(event.target.getAttribute("data-row"),event.target.getAttribute("data-col"))
+                checkIfGridLocationFree(event.target.getAttribute("data-row"),event.target.getAttribute("data-col"),mode)
             }else{
                 alert("Location already occupied");
             }
         }));
     }
     let isBlocked = false
-    async function checkIfGridLocationFree(i, j) {
+    async function checkIfGridLocationFree(i, j, mode) {
         try {
             if(!isBlocked){
                 isBlocked = true
@@ -757,7 +769,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const data = await response.json();
         
                 if (data.isFree) {
-                    submitKonvaImage(i,j);
+                    if(mode==0){
+                        submitKonvaImage(i,j);
+                    }
+                    else{
+                        doAfterReserve(i,j);
+                    }
                     closeModal();
                 } else {
                     updateGrid(i, j, { class: "bg-red-600 hover:bg-red-700" }); // Update class if location is occupied
@@ -773,7 +790,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const gridItems = document.querySelectorAll('.grid-item');
         const n = 4;
         const index = (rowIndex * n) + colIndex;
-        console.log(index)
         if (index < gridItems.length) {
             const gridItem = gridItems[index];
             if (updateData.class) {
@@ -786,5 +802,4 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Index out of range.');
         }
     }
-    
 });

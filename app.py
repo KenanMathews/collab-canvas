@@ -65,11 +65,17 @@ def upload_pixel_art():
     name = request.form.get('name')
     image_link = request.form.get('image_link')
     try:
+        x = int(request.form.get('x'))
+        y = int(request.form.get('y'))
         if image_link:
-            coords = db.get_random_free_coordinate()
-            link = imgur.download_and_upload(image_link, name+'.png')
-            db.update_annotations(link, coords[0], coords[1], name)
-            return jsonify({'message': 'Pixel art uploaded successfully', 'image_link': image_link}), 200
+            free = db.check_if_coordinate_free(x,y)
+            x,y = db.reverse_convert_coordinates(x,y)
+            if free:
+                link = imgur.download_and_upload(image_link, name+'.png')
+                db.update_annotations(link, x, y, name)
+                return jsonify({'message': 'Pixel art uploaded successfully', 'image_link': image_link}), 200
+            else:
+                return jsonify({'message': 'The location is occupied'}), 200
         else:
             return jsonify({'error': 'Failed to upload pixel art to Imgur'}), 500
     except Exception as e:
